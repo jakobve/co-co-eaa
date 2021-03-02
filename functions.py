@@ -286,8 +286,8 @@ def filter_main_process_bpi15(directly_follows_graph):
     return edges_filtered
 
 
-# Due to the format of the directly follows graph you have to source the vertices from the edges
-# of the directly follows graph
+# Due to the format of the directly follows graph you have to source the vertices from the edges of the directly
+# follows graph
 def get_vertices(edges):
     """
     Returns the vertices contained in the directly follows graph
@@ -506,7 +506,7 @@ def run_leiden(graph):
     :param graph: iGraph object - Directed, weighted iGraph object
     :return: Partition object - High modular partition having a high cohesion and loose coupling
     """
-    partition = la.find_partition(graph, la.ModularityVertexPartition, weights='weight')
+    partition = la.find_partition(graph, la.ModularityVertexPartition, seed=0, weights='weight')
     return partition
 
 
@@ -666,8 +666,7 @@ def calc_avg_process_coupling(partition, graph):
     return avg_process_coupling
 
 
-# Calculate total process coupling by dividing the average process coupling
-# with the number of partitions
+# Calculate total process coupling by dividing the average process coupling with the number of partitions
 def calc_process_coupling(partitions, graph):
     """
     Calculate total process coupling by dividing the average process coupling with the number of partitions.
@@ -709,8 +708,7 @@ def calc_process_cohesion(partitions, graph):
 # Calculate community relation cohesion
 # ......................................................................................................................
 
-# Determines for each event of the given community with how many other events it
-# overlaps by sharing an input or output
+# Determines for each event of the given community with how many other events it overlaps by sharing an input or output
 def calc_community_relation_cohesion(partition, graph):
     """
     Determines for each event of the given community with how many other events it overlaps by sharing an input or
