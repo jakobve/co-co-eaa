@@ -11,9 +11,9 @@ from streamlit import caching
 logs = [
     "BPI2015_all_1.xes",
     "BPI2015_all_2.xes",
-    # "BPI2015_all_3.xes",
-    # "BPI2015_all_4.xes",
-    # "BPI2015_all_5.xes",
+    "BPI2015_all_3.xes",
+    "BPI2015_all_4.xes",
+    "BPI2015_all_5.xes",
     # "BPI2015_main_1.xes",
     # "BPI2015_main_2.xes",
     # "BPI2015_main_3.xes",
