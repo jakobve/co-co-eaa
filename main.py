@@ -1,65 +1,75 @@
 # Imports
-import functions
+import csv
 import gc
 import os
 
 from streamlit import caching
+
+import functions
 
 # The BPI2015 all and main are the same event logs. I needed to modify the name to BPI2015_main to analyze the main
 # process in the iterative manner shown below.
 
 logs = [
     "BPI2015_all_1.xes",
-    # "BPI2015_all_2.xes",
-    # "BPI2015_all_3.xes",
-    # "BPI2015_all_4.xes",
-    # "BPI2015_all_5.xes",
-    # "BPI2015_main_1.xes",
-    # "BPI2015_main_2.xes",
-    # "BPI2015_main_3.xes",
-    # "BPI2015_main_4.xes",
-    # "BPI2015_main_5.xes",
+    "BPI2015_all_2.xes",
+    "BPI2015_all_3.xes",
+    "BPI2015_all_4.xes",
+    "BPI2015_all_5.xes",
+    "BPI2015_main_1.xes",
+    "BPI2015_main_2.xes",
+    "BPI2015_main_3.xes",
+    "BPI2015_main_4.xes",
+    "BPI2015_main_5.xes",
     # "BPI2017.xes",
     # "BPI2018.xes",
-    # "BPI2020_DomesticDeclarations.xes",
-    # "BPI2020_InternationalDeclarations.xes",
-    # "BPI2020_PermitLog.xes",
-    # "BPI2020_PrepaidTravelCost.xes",
-    # "BPI2020_RequestForPayment.xes"
+    "BPI2020_DomesticDeclarations.xes",
+    "BPI2020_InternationalDeclarations.xes",
+    "BPI2020_PermitLog.xes",
+    "BPI2020_PrepaidTravelCost.xes",
+    "BPI2020_RequestForPayment.xes"
 ]
 
 
 def main():
     gc.enable()
 
+    with open('evaluation_results.csv', 'w', newline='') as csvfile:
+        mywriter = csv.writer(csvfile, delimiter=';')
+        # write header
+        mywriter.writerow(["Log", "Identified communities", "Ground_truth_clusters", "PCCR", "Q", "ARI", "FMS", "NMI"])
+
     for log_name in logs:
+
+        myrow = list()
+        myrow.append(log_name)
 
         # Due to runtime optimization I already stored the intermediate results for identifying the ground truth in
         # event logs and skipped this step. For completeness I included the steps below, that identify the ground
         # truth and export the event log to the Data/logs_with_truth folder.
 
         # Specify the path
-        # log_file = f"Data/input_logs{log_name}"
+        log_file = f"Data/input_logs/{log_name}"
 
-        # if os.path.exists(log_file):
+        if os.path.exists(log_file):
 
-        # print("\nLoading event log:", log_name)
+            print("\nLoading event log:", log_name)
 
-        # Import, parse and sort the event log
-        # log = functions.import_log_xes(log_file)
+            # Import, parse and sort the event log
+            log = functions.import_log_xes(log_file)
 
-        # Identify the ground truth
-        # log = functions.identify_ground_truth(log, log_name)
+            # Identify the ground truth
+            log = functions.identify_ground_truth(log, log_name)
 
-        # Specify the directory to which the event log containing the ground truth needs to be exported
-        # path = f"Data/logs_with_truth/{log_name}"
+            # Specify the directory to which the event log containing the ground truth needs to be exported
+            path = f"Data/logs_with_truth/{log_name}"
 
-        # Export the event log to the given directory
-        # functions.export_log_xes(log, path)
+            # Export the event log to the given directory
+            functions.export_log_xes(log, path)
 
-        # else:
-        # print("Error")
-        gc.collect()
+        else:
+            print("File path does not exist: ", log_file)
+            gc.collect()
 
         # Specify the import directory
         log_file = f"Data/logs_with_truth/{log_name}"
@@ -80,6 +90,9 @@ def main():
 
                 # Source vertices from directly follows graph
                 vertices = functions.get_vertices(edges.keys())
+
+                # Remove duplicates from the list
+                vertices = functions.remove_duplicates(vertices)
 
                 # Initialize list
                 ground_truth_partition = list()
@@ -115,10 +128,15 @@ def main():
 
                 # Convert the discovered communities into an x dimensional array
                 partition_list = functions.convert_partitions_to_list(partition)
+                myrow.append(len(partition_list))
+
+                # Ground truth is always 10 in BPI 2015 Main
+                myrow.append(9)
 
                 # Calculate Process-Cohesion-Coupling Ratio
                 pccr = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
                 print("Process-cohesion-coupling-ratio:", pccr)
+                myrow.append(pccr)
 
                 # Index the vertices according to the graphs internal vertices, for later evaluation
                 vertices = functions.index_vertices(vertices, graph)
@@ -129,18 +147,22 @@ def main():
                 # Calculate modularity Q for partition
                 q = functions.get_modularity(partition)
                 print("Modularity: ", q)
+                myrow.append(q)
 
                 # Calculate adjusted Rand index for respective event log
                 ari = functions.calc_adjusted_rand_index(ground_truth_partition, communities_identified)
                 print("Adjusted Rand Index: ", ari)
+                myrow.append(ari)
 
                 # Calculate Fowlkes-Mallows Score
                 fms = functions.calc_fms(ground_truth_partition, communities_identified)
                 print("Fowlkes-Mallows Score:", fms)
+                myrow.append(fms)
 
                 # Calculate normalized mutual information
                 nmi = functions.calc_nmi(ground_truth_partition, communities_identified)
                 print("Normalized Mutual Information", nmi)
+                myrow.append(nmi)
 
                 # Insert the identified communities into the event log as event attribute
                 log = functions.insert_communities_to_log(log, partition, graph)
@@ -158,6 +180,9 @@ def main():
                 # Source vertices from directly follows graph
                 vertices = functions.get_vertices(edges)
 
+                # Remove duplicates from the list
+                vertices = functions.remove_duplicates(vertices)
+
                 # Create a directed weighted graph
                 graph = functions.create_igraph(dfg)
 
@@ -169,6 +194,7 @@ def main():
 
                 # Convert the discovered communities into an x dimensional array
                 partition_list = functions.convert_partitions_to_list(partition)
+                myrow.append(len(partition_list))
 
                 # Calculate Process-Cohesion-Coupling Ratio
                 pccr = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
@@ -179,42 +205,55 @@ def main():
 
                 # Get the ground truth from the event log
                 ground_truth_partition = functions.get_ground_truth(vertices, graph, log)
+                myrow.append(len(functions.remove_duplicates(ground_truth_partition)))
+
+                # Append the pccr in the right order to the csv
+                myrow.append(pccr)
 
                 # Index the vertices according to the graphs internal vertices, for later evaluation
                 vertices = functions.index_vertices(vertices, graph)
 
-                # Transform the partition to an array
+                # Transform the partition to list
                 communities_identified = functions.get_list(vertices, partition_list)
 
                 # Calculate modularity Q for partition
                 q = functions.get_modularity(partition)
                 print("Modularity: ", q)
+                myrow.append(q)
 
                 # Calculate adjusted Rand index for respective event log
                 ari = functions.calc_adjusted_rand_index(ground_truth_partition, communities_identified)
                 print("Adjusted Rand Index: ", ari)
+                myrow.append(ari)
 
                 # Calculate Fowlkes-Mallows Score
                 fms = functions.calc_fms(ground_truth_partition, communities_identified)
                 print("Fowlkes-Mallows Score:", fms)
+                myrow.append(fms)
 
                 # Calculate normalized mutual information
                 nmi = functions.calc_nmi(ground_truth_partition, communities_identified)
                 print("Normalized Mutual Information", nmi)
+                myrow.append(nmi)
 
                 # Insert the identified communities into the event log as event attribute
-                # log = functions.insert_communities_to_log(log, partition, graph)
+                log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                # path = f"Data/output_logs/{log_name}"
+                path = f"Data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
-                # functions.export_log_xes(log, path)
+                functions.export_log_xes(log, path)
 
         else:
             print("File path does not exist: ", log_file)
 
+        with open("evaluation_results.csv", 'a', newline='') as csvfile:
+            mywriter = csv.writer(csvfile, delimiter=';')
+            mywriter.writerow(myrow)
+
         caching.clear_cache()
+
     print("\nDone")
 
 

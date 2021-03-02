@@ -314,10 +314,9 @@ def get_vertices(edges):
                 part = part[2:]
                 # Remove the last two characters
                 part = part[:-2]
-            # Store cleaned vertices in an array
+            # Store extracted vertices in an array
             vertices.append(part)
-    # Remove duplicates from the list
-    vertices = remove_duplicates(vertices)
+
     vertices.sort()
     return vertices
 
@@ -567,7 +566,7 @@ def get_position(vertex, partition):
     Returns the position of a given vertex in a given partition.
 
     :param vertex: int - Single vertex
-    :param partition: Partition Object - Partition object returned by the leiden algorithm
+    :param partition: Partition Object - Partition object returned by the Leiden algorithm
     :return: int - Integer containing the subpart of the partition the vertex is in
     """
     index = 0
@@ -771,7 +770,7 @@ def calc_process_coupling_cohesion_ratio(partitions, graph):
         pccr = 0
     else:
         pccr = cp / ch
-    return pccr
+    return float(pccr)
 
 
 # Evaluation Methods
