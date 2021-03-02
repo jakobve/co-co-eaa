@@ -21,8 +21,7 @@ logs = [
     "BPI2015_main_3.xes",
     "BPI2015_main_4.xes",
     "BPI2015_main_5.xes",
-    # "BPI2017.xes",
-    # "BPI2018.xes",
+    "BPI2017.xes",
     "BPI2020_DomesticDeclarations.xes",
     "BPI2020_InternationalDeclarations.xes",
     "BPI2020_PermitLog.xes",
@@ -53,7 +52,7 @@ def main():
 
         if os.path.exists(log_file):
 
-            print("\nLoading event log:", log_name)
+            print("\nLoad event log:", log_name)
 
             # Import, parse and sort the event log
             log = functions.import_log_xes(log_file)
@@ -69,7 +68,6 @@ def main():
 
         else:
             print("File path does not exist: ", log_file)
-            gc.collect()
 
         # Specify the import directory
         log_file = f"Data/logs_with_truth/{log_name}"
@@ -89,7 +87,7 @@ def main():
                 edges = functions.filter_main_process_bpi15(dfg)
 
                 # Source vertices from directly follows graph
-                vertices = functions.get_vertices(edges.keys())
+                vertices = functions.get_vertices(edges)
 
                 # Remove duplicates from the list
                 vertices = functions.remove_duplicates(vertices)
@@ -174,11 +172,8 @@ def main():
                 functions.export_log_xes(log, path)
 
             else:
-                # Source edges from directly follows graph
-                edges = list(dfg.keys())
-
                 # Source vertices from directly follows graph
-                vertices = functions.get_vertices(edges)
+                vertices = functions.get_vertices(dfg)
 
                 # Remove duplicates from the list
                 vertices = functions.remove_duplicates(vertices)

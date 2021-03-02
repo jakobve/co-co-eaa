@@ -2,17 +2,15 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import igraph as ig
 import leidenalg as la
-import re
-
-from pm4py.algo.filtering.log.attributes import attributes_filter
 from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+from pm4py.algo.filtering.log.attributes import attributes_filter
+from pm4py.objects.log.exporter.xes import exporter as xes_exporter
+from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.objects.log.util import sorting
 from pm4py.util import xes_constants as xes
-from pm4py.objects.log.importer.xes import importer as xes_importer
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.cluster import fowlkes_mallows_score as fms
 from sklearn.metrics.cluster import normalized_mutual_info_score as nmi
-from pm4py.objects.log.exporter.xes import exporter as xes_exporter
 
 
 # Event log methods
@@ -149,7 +147,6 @@ def identify_ground_truth(log, log_name):
                 else:
                     print(event['concept:name'])
         return log
-
     elif "BPI2017" in log_name:
         for trace in log:
             for event in trace:
@@ -162,7 +159,6 @@ def identify_ground_truth(log, log_name):
                 else:
                     print(event['concept:name'])
         return log
-
     elif "BPI2018" in log_name:
         for trace in log:
             for event in trace:
@@ -185,7 +181,6 @@ def identify_ground_truth(log, log_name):
                 else:
                     print(event['subprocess'])
         return log
-
     elif "BPI2020" in log_name:
         for trace in log:
             for event in trace:
@@ -208,7 +203,6 @@ def identify_ground_truth(log, log_name):
                 else:
                     print(event['org:role'])
         return log
-
     else:
         print("Event log not found")
 
@@ -271,52 +265,39 @@ def filter_log_by_weight(directly_follows_graph, edge_weight):
 
 
 # Filter the BPI challenges 2015s event log for the main process HOOFD
-def filter_main_process_bpi15(directly_follows_graph):
+def filter_main_process_bpi15(dfg):
     """
     Filters the directly follows graph of the BPI challenge 2015 logs_with_truth for the edges belonging to the main
     process HOOFD.
 
-    :param directly_follows_graph: dict - Directly Follows Graph
+    :param dfg: dict - Directly Follows Graph
     :return: dict - Edges with respective weights that belong to the main process of the BPI
     """
     edges_filtered = dict()
-    for (key, value) in directly_follows_graph.items():
-        if re.search(r"^\(\'01_HOOFD_.+\,\s\'01_HOOFD_.+\'\)$", str(key)):
-            edges_filtered[key] = value
+    for key in dfg.keys():
+        if '01_HOOFD_' in key[0] and '01_HOOFD_' in key[1]:
+            print(key)
+            edges_filtered[key] = dfg[key]
     return edges_filtered
 
 
 # Due to the format of the directly follows graph you have to source the vertices from the edges of the directly
 # follows graph
-def get_vertices(edges):
+def get_vertices(dfg):
     """
     Returns the vertices contained in the directly follows graph
     indicated in the edges.
 
-    :param edges: list - Edges of the directly follows graph
+    :param dfg: Directly Follows Graph
     :return: list - Vertices of the directly follows graph
     """
     vertices = list()
-    for edge in edges:
-        # Transform edge to string
-        txt = str(edge)
-        # Split edge into two parts and store both in an array
-        txt = txt.split(',')
-        for part in txt:
-            # If it is the first part of an edge
-            if '(' in part:
-                # Remove the first two characters
-                part = part[2:]
-                # Remove the last character
-                part = part[:-1]
-            elif ')' in part:
-                # Remove the first two characters
-                part = part[2:]
-                # Remove the last two characters
-                part = part[:-2]
-            # Store extracted vertices in an array
-            vertices.append(part)
+    for item in dfg.keys():
+        if "&" in str(item[0]):
+            str(item[0]).replace("&", "&amp;")
+        vertices.append(item[0])
 
+        vertices.append(item[1])
     vertices.sort()
     return vertices
 
