@@ -10,10 +10,10 @@ from streamlit import caching
 
 logs = [
     "BPI2015_all_1.xes",
-    "BPI2015_all_2.xes",
-    "BPI2015_all_3.xes",
-    "BPI2015_all_4.xes",
-    "BPI2015_all_5.xes",
+    # "BPI2015_all_2.xes",
+    # "BPI2015_all_3.xes",
+    # "BPI2015_all_4.xes",
+    # "BPI2015_all_5.xes",
     # "BPI2015_main_1.xes",
     # "BPI2015_main_2.xes",
     # "BPI2015_main_3.xes",
@@ -34,9 +34,9 @@ def main():
 
     for log_name in logs:
 
-        # Due to runtime optimization I already stored the intermediate results for identifying the ground truth.
-        # in event logs and skipped this step. For completeness I included the steps below, that identify the ground
-        # truth and export the event log to the Data/logs_with_truth folder
+        # Due to runtime optimization I already stored the intermediate results for identifying the ground truth in
+        # event logs and skipped this step. For completeness I included the steps below, that identify the ground
+        # truth and export the event log to the Data/logs_with_truth folder.
 
         # Specify the path
         # log_file = f"Data/input_logs{log_name}"
@@ -109,7 +109,6 @@ def main():
 
                 # Run the Leiden algorithm on the graph and receive the partitions
                 partition = functions.run_leiden(graph)
-                print(partition)
 
                 # Insert the identified communities in the event log
                 functions.insert_communities_to_log(log, partition, graph)
@@ -121,10 +120,10 @@ def main():
                 pccr = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
                 print("Process-cohesion-coupling-ratio:", pccr)
 
-                # Index the vertices according to the graphs internal vertices, for later
+                # Index the vertices according to the graphs internal vertices, for later evaluation
                 vertices = functions.index_vertices(vertices, graph)
 
-                # Transform the partition to an array
+                # Transform the partition to a list
                 communities_identified = functions.get_list(vertices, partition_list)
 
                 # Calculate modularity Q for partition
@@ -164,7 +163,6 @@ def main():
 
                 # Run the Leiden algorithm on the graph and receive the partitions
                 partition = functions.run_leiden(graph)
-                print(partition)
 
                 # Insert the identified communities in the event log
                 functions.insert_communities_to_log(log, partition, graph)
@@ -181,6 +179,9 @@ def main():
 
                 # Get the ground truth from the event log
                 ground_truth_partition = functions.get_ground_truth(vertices, graph, log)
+
+                # Index the vertices according to the graphs internal vertices, for later evaluation
+                vertices = functions.index_vertices(vertices, graph)
 
                 # Transform the partition to an array
                 communities_identified = functions.get_list(vertices, partition_list)
@@ -202,13 +203,13 @@ def main():
                 print("Normalized Mutual Information", nmi)
 
                 # Insert the identified communities into the event log as event attribute
-                log = functions.insert_communities_to_log(log, partition, graph)
+                # log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                path = f"Data/output_logs/{log_name}"
+                # path = f"Data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
-                functions.export_log_xes(log, path)
+                # functions.export_log_xes(log, path)
 
         else:
             print("File path does not exist: ", log_file)
