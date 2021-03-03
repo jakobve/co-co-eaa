@@ -502,14 +502,15 @@ def get_ground_truth_list(vertices, graph, log):
     return ground_truth
 
 
-# comment
+# Returns the ground truth sourced from the event log in form of a dict
 def get_ground_truth_dict(vertices, graph, log):
     """
-    comment
-    :param vertices:
-    :param graph:
-    :param log:
-    :return:
+    Returns the ground truth sourced from the event log in form of a dict.
+
+    :param vertices: list - List of vertices from the graph
+    :param graph: iGraph object
+    :param log: event log object
+    :return: dict - dictionary containing the ground truth
     """
     vertices = index_vertices(vertices, graph)
     vertices.sort()
