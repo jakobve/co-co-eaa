@@ -207,6 +207,40 @@ def identify_ground_truth(log, log_name):
         print("Event log not found")
 
 
+# Creates a dictionary containing the vertex as key and the community as value
+def create_community_dict(partition, graph):
+    """
+    Creates a dictionary containing the vertex as key and the community as value
+    :param partition: Partition object returned by the leiden algorithm
+    :param graph: iGrpah object
+    :return: dict() - dictionary with respective communities
+    """
+    it = 0
+    communities = dict()
+    for part in partition:
+        for vertex in part:
+            communities[graph.vs[vertex]['name']] = it
+        it += 1
+    return communities
+
+
+# Reformat the dictionary to a x-dimensional list
+def reformat_community_dict(community_dict):
+    """
+    Reformats the dictionary to a x-dimensional list
+    :param community_dict: dict()
+    :return: x-dimensional list
+    """
+    ret = dict()
+    for i in set(community_dict.values()):
+        ret[i] = []
+
+    for key in community_dict.keys():
+        ret[community_dict[key]].append(key)
+
+    return list(ret.values())
+
+
 # Inserts the identified communities into the event log as event attribute ['community']
 def insert_communities_to_log(log, partition, graph):
     """
@@ -217,13 +251,8 @@ def insert_communities_to_log(log, partition, graph):
     :param graph: iGraph object
     :return: event log object
     """
-    it = 0
-    communities = dict()
+    communities = create_community_dict(partition, graph)
 
-    for part in partition:
-        for vertex in part:
-            communities[graph.vs[vertex]['name']] = it
-        it += 1
     for trace in log:
         for event in trace:
             if event['concept:name'] in communities.keys():
@@ -450,7 +479,7 @@ def get_number_of_unique_successors(partition, graph):
 
 
 # Returns the ground truth which was previously stored in the event log in form of a list
-def get_ground_truth(vertices, graph, log):
+def get_ground_truth_list(vertices, graph, log):
     """
     Returns the ground truth which was previously stored in the event log in form of a list.
 
@@ -470,6 +499,29 @@ def get_ground_truth(vertices, graph, log):
                 if v_name == event['concept:name']:
                     cluster = event['truth']
         ground_truth.append(cluster)
+    return ground_truth
+
+
+# comment
+def get_ground_truth_dict(vertices, graph, log):
+    """
+    comment
+    :param vertices:
+    :param graph:
+    :param log:
+    :return:
+    """
+    vertices = index_vertices(vertices, graph)
+    vertices.sort()
+    cluster = 0
+    ground_truth = dict()
+    for vertex in vertices:
+        v_name = graph.vs[vertex]['name']
+        for trace in log:
+            for event in trace:
+                if v_name == event['concept:name']:
+                    cluster = event['truth']
+        ground_truth[v_name] = cluster
     return ground_truth
 
 

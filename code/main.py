@@ -33,10 +33,11 @@ def main():
     gc.enable()
 
     # Create csv file to store evaluation results in
-    with open(f"evaluation_results/evaluation_results.csv", 'w', newline='') as csvfile:
+    with open("../evaluation_results/evaluation_results.csv", 'w', newline='') as csvfile:
         mywriter = csv.writer(csvfile, delimiter=';')
         # write header
-        mywriter.writerow(["Log", "Identified communities", "Ground_truth_clusters", "PCCR", "Q", "ARI", "FMS", "NMI"])
+        mywriter.writerow(["Log", "Identified communities", "Ground_truth_clusters", "PCCR Identified ", "PCCR Truth",
+                           "Q", "ARI", "FMS", "NMI"])
 
     for log_name in logs:
 
@@ -49,7 +50,7 @@ def main():
         # truth and export the event log to the data/logs_with_truth folder.
 
         # Specify the path
-        log_file = f"data/input_logs/{log_name}"
+        log_file = f"../data/input_logs/{log_name}"
 
         if os.path.exists(log_file):
 
@@ -62,7 +63,7 @@ def main():
             log = functions.identify_ground_truth(log, log_name)
 
             # Specify the directory to which the event log containing the ground truth needs to be exported
-            path = f"data/logs_with_truth/{log_name}"
+            path = f"../data/logs_with_truth/{log_name}"
 
             # Export the event log to the given directory
             functions.export_log_xes(log, path)
@@ -71,7 +72,7 @@ def main():
             print("File path does not exist: ", log_file)
 
         # Specify the import directory
-        log_file = f"data/logs_with_truth/{log_name}"
+        log_file = f"../data/logs_with_truth/{log_name}"
 
         if os.path.exists(log_file):
             print("\nLoad event log: ", log_name)
@@ -93,9 +94,8 @@ def main():
                 # Remove duplicates from the list
                 vertices = functions.remove_duplicates(vertices)
 
-                # Initialize list
+                # Initialize one dimensional list representing the ground truth
                 ground_truth_partition = list()
-
                 for vertex in vertices:
                     if vertex[9] == "0":
                         ground_truth_partition.append(0)
@@ -129,16 +129,28 @@ def main():
                 partition_list = functions.convert_partitions_to_list(partition)
                 myrow.append(len(partition_list))
 
+                community_dict = dict()
+                # Index the vertices according to the graphs internal vertices, for later evaluation
+                vertices = functions.index_vertices(vertices, graph)
+                it = 0
+                for vertex in vertices:
+                    community_dict[vertex] = ground_truth_partition[it]
+                    it += 1
+                truth_list = functions.reformat_community_dict(community_dict)
+
                 # Ground truth is always 10 in BPI 2015 Main
                 myrow.append(9)
 
+                # Evaluation metrics
+                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 # Calculate Process-Cohesion-Coupling Ratio
-                pccr = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
-                print("Process-cohesion-coupling-ratio:", pccr)
-                myrow.append(pccr)
+                pccr_leiden = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
+                print("Process-cohesion-coupling-ratio identified communities: ", pccr_leiden)
+                myrow.append(pccr_leiden)
 
-                # Index the vertices according to the graphs internal vertices, for later evaluation
-                vertices = functions.index_vertices(vertices, graph)
+                pccr_truth = functions.calc_process_coupling_cohesion_ratio(truth_list, graph)
+                print("Process-cohesion-coupling-ratio truth: ", pccr_truth)
+                myrow.append(pccr_truth)
 
                 # Transform the partition to a list
                 communities_identified = functions.get_list(vertices, partition_list)
@@ -163,11 +175,14 @@ def main():
                 print("Normalized Mutual Information", nmi)
                 myrow.append(nmi)
 
+                # Export the event log
+                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
                 # Insert the identified communities into the event log as event attribute
                 log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                path = f"data/output_logs/{log_name}"
+                path = f"../data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
                 functions.export_log_xes(log, path)
@@ -192,19 +207,38 @@ def main():
                 partition_list = functions.convert_partitions_to_list(partition)
                 myrow.append(len(partition_list))
 
-                # Calculate Process-Cohesion-Coupling Ratio
-                pccr = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
-                print("Process-cohesion-coupling-ratio:", pccr)
+                # Evaluation metrics
+                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                # Calculate Process-Cohesion-Coupling Ratio for the detected communities
+                pccr_leiden = functions.calc_process_coupling_cohesion_ratio(partition_list, graph)
+                print("Process-cohesion-coupling-ratio identified communities:", pccr_leiden)
+
+                # Calculate process-Cohesion-Coupling Ratio for the detected communities
+                # Get the partitions from the log
+                truth_part = functions.get_ground_truth_dict(vertices, graph, log)
+
+                # Transform the ground truth partition to a x-dimensional list
+                truth_list = functions.reformat_community_dict(truth_part)
+
+                # Index the vertices for the ground truth x dimensional list
+                truth_list_indexed = list()
+                for part in truth_list:
+                    truth_list_indexed.append(functions.index_vertices(part, graph))
+                pccr_truth = functions.calc_process_coupling_cohesion_ratio(truth_list_indexed, graph)
+                print("Process-cohesion-coupling-ratio truth:", pccr_truth)
 
                 # Sort vertices
                 vertices.sort()
 
-                # Get the ground truth from the event log
-                ground_truth_partition = functions.get_ground_truth(vertices, graph, log)
+                # Get the ground truth from the event log as one-dimensional list
+                ground_truth_partition = functions.get_ground_truth_list(vertices, graph, log)
+
+                # Append number of different communities in ground truth
                 myrow.append(len(functions.remove_duplicates(ground_truth_partition)))
 
-                # Append the pccr in the right order to the csv
-                myrow.append(pccr)
+                # Append the pccr_leiden & pccr_truth in the right order to the csv
+                myrow.append(pccr_leiden)
+                myrow.append(pccr_truth)
 
                 # Index the vertices according to the graphs internal vertices, for later evaluation
                 vertices = functions.index_vertices(vertices, graph)
@@ -232,11 +266,14 @@ def main():
                 print("Normalized Mutual Information", nmi)
                 myrow.append(nmi)
 
+                # Export the event log
+                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
                 # Insert the identified communities into the event log as event attribute
                 log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                path = f"data/output_logs/{log_name}"
+                path = f"../data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
                 functions.export_log_xes(log, path)
@@ -245,7 +282,7 @@ def main():
             print("File path does not exist: ", log_file)
 
         # Append evaluation results into the csv file
-        with open(f"evaluation_results/evaluation_results.csv", 'a', newline='') as csvfile:
+        with open("../evaluation_results/evaluation_results.csv", 'a', newline='') as csvfile:
             mywriter = csv.writer(csvfile, delimiter=';')
             mywriter.writerow(myrow)
 
