@@ -1,11 +1,10 @@
 # Imports
 import csv
+import functions
 import gc
 import os
 
 from streamlit import caching
-
-import functions
 
 # The BPI2015 all and main are the same event logs. I needed to modify the name to BPI2015_main to analyze the main
 # process in the iterative manner shown below.
@@ -33,22 +32,24 @@ logs = [
 def main():
     gc.enable()
 
-    with open('evaluation_results.csv', 'w', newline='') as csvfile:
+    # Create csv file to store evaluation results in
+    with open(f"evaluation_results/evaluation_results.csv", 'w', newline='') as csvfile:
         mywriter = csv.writer(csvfile, delimiter=';')
         # write header
         mywriter.writerow(["Log", "Identified communities", "Ground_truth_clusters", "PCCR", "Q", "ARI", "FMS", "NMI"])
 
     for log_name in logs:
 
+        # Row to store evaluation results of the respective event log
         myrow = list()
         myrow.append(log_name)
 
         # Due to runtime optimization I already stored the intermediate results for identifying the ground truth in
         # event logs and skipped this step. For completeness I included the steps below, that identify the ground
-        # truth and export the event log to the Data/logs_with_truth folder.
+        # truth and export the event log to the data/logs_with_truth folder.
 
         # Specify the path
-        log_file = f"Data/input_logs/{log_name}"
+        log_file = f"data/input_logs/{log_name}"
 
         if os.path.exists(log_file):
 
@@ -61,7 +62,7 @@ def main():
             log = functions.identify_ground_truth(log, log_name)
 
             # Specify the directory to which the event log containing the ground truth needs to be exported
-            path = f"Data/logs_with_truth/{log_name}"
+            path = f"data/logs_with_truth/{log_name}"
 
             # Export the event log to the given directory
             functions.export_log_xes(log, path)
@@ -70,7 +71,7 @@ def main():
             print("File path does not exist: ", log_file)
 
         # Specify the import directory
-        log_file = f"Data/logs_with_truth/{log_name}"
+        log_file = f"data/logs_with_truth/{log_name}"
 
         if os.path.exists(log_file):
             print("\nLoad event log: ", log_name)
@@ -166,7 +167,7 @@ def main():
                 log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                path = f"Data/output_logs/{log_name}"
+                path = f"data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
                 functions.export_log_xes(log, path)
@@ -235,7 +236,7 @@ def main():
                 log = functions.insert_communities_to_log(log, partition, graph)
 
                 # Specify the directory for the export
-                path = f"Data/output_logs/{log_name}"
+                path = f"data/output_logs/{log_name}"
 
                 # Export the event log to the specified directory
                 functions.export_log_xes(log, path)
@@ -243,7 +244,8 @@ def main():
         else:
             print("File path does not exist: ", log_file)
 
-        with open("evaluation_results.csv", 'a', newline='') as csvfile:
+        # Append evaluation results into the csv file
+        with open(f"evaluation_results/evaluation_results.csv", 'a', newline='') as csvfile:
             mywriter = csv.writer(csvfile, delimiter=';')
             mywriter.writerow(myrow)
 

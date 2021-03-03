@@ -276,7 +276,6 @@ def filter_main_process_bpi15(dfg):
     edges_filtered = dict()
     for key in dfg.keys():
         if '01_HOOFD_' in key[0] and '01_HOOFD_' in key[1]:
-            print(key)
             edges_filtered[key] = dfg[key]
     return edges_filtered
 
