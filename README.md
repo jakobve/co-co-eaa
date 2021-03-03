@@ -1,5 +1,5 @@
 # co-co-eaa
-This project is the implementation of a cohesion-coupling-based event abstraction approach. The implementation belong to the Bachelor Thesis "Cohesion-coupling based event abstraction".
+This project is the implementation of a cohesion-coupling-based event abstraction approach. The implementation belongs to the Bachelor Thesis "Cohesion-coupling based event abstraction".
 
 ## Libraries
 In this work the following libraries are used:
